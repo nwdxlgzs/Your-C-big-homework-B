@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>递龟——文件中转站分享</title>
+    <link rel="stylesheet" href="./layui/css/layui.css">
+    <link rel="stylesheet" href="editormd/css/editormd.css" />
+    <script type="text/javascript" src="./layui/layui.js"></script>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />、
+    <script src="./core.js"></script>
+</head>
+
+<body>
+    <div id="particles-js"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;background-color: #0093E9;background-image: linear-gradient(160deg, #0093E9 0%, #80D0C7 100%);">
+        <!-- <canvas id="canvas"></canvas> -->
+    </div>
+    <script src="./BG/particles.min.js"></script>
+    <script src="./BG/BGdraw.js"></script>
+    <div class="layui-container layui-row layui-card"
+        style="margin-top: 2vh;margin-bottom: 2vh;margin-left: 2vw;margin-right: 2vw; width: 96vw; height: 92vh; padding: 0;">
+        <div class="layui-card-body">
+            <div class="layui-card-body">
+                <img src="./favicon.ico" style="width: 30px; height: 30px; margin-right: 10px;" />
+                <span style="font-size: 20px;">递龟——文件中转站</span>
+                <button class="layui-btn layui-btn-normal" style="float: right;" id="backBTN">返回</button>
+            </div>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-form-item">
+                <label class="layui-form-label">消息名称：</label>
+                <div class="layui-input-block">
+                    <input type="text" id="msgName" name="msgName" placeholder="" autocomplete="off" class="layui-input"
+                        disabled>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">消息类型：</label>
+                <div class="layui-input-block">
+                    <select name="msgType" lay-verify="required" id="msgType" class="layui-select" disabled>
+                        <option value="0">文本</option>
+                        <option value="1">Markdown</option>
+                        <option value="2">文件</option>
+                        <option value="3">图片</option>
+                        <option value="4">音频</option>
+                        <option value="5">视频</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item" style="display: none;" id="textDiv">
+                <label class="layui-form-label">文本消息：</label>
+                <div class="layui-input-block">
+                    <textarea type="text" id="textInput" name="textInput" placeholder="" class="layui-input"
+                        style="resize: vertical; height: 50vh;" disabled></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item" style="display: none;" id="markdownDiv">
+                <label class="layui-form-label">MarkDown文档：</label>
+                <div class="layui-input-block" style="height: 50vh;">
+                    <div id="md-editor">
+                        <textarea style="display:none;" id="md-editor-txt"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item" style="display: none;" id="fileDiv">
+                <label class="layui-form-label">单文件：</label>
+                <div class="layui-input-block">
+                    <div class="layui-form-item layui-card">
+                        <div id="drag_area" class="layui-card-body"
+                            style="height: 40vh; border: 1px dashed #ccc; text-align: center; line-height: 40vh; font-size: 20px; color: #ccc;">
+                            拖拽单个文件到此处
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">文件：</label>
+                        <div class="layui-input-block">
+                            <input type="text" id="fileName" name="fileName" placeholder="文件名" autocomplete="off"
+                                class="layui-input" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item" style="display: none;" id="imageDiv">
+                <label class="layui-form-label">图片：</label>
+                <div class="layui-input-block">
+                    <div class="layui-upload">
+                        <div class="layui-upload-list">
+                            <img class="layui-upload-img" id="imagePrev"
+                                style="width: 100px; height: 100px; max-height: 50vh;" />
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item" style="display: none;" id="audioDiv">
+                <label class="layui-form-label">音频：</label>
+                <div class="layui-input-block">
+                    <div class="layui-upload">
+                        <div class="layui-upload-list">
+                            <audio controls="controls" id="audioPrev" style="display: none;"></audio>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item" style="display: none;" id="videoDiv">
+                <label class="layui-form-label">视频：</label>
+                <div class="layui-input-block">
+                    <div class="layui-upload">
+                        <div class="layui-upload-list">
+                            <video controls="controls" id="videoPrev" style="display: none;height: 50vh"></video>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn layui-btn-normal" id="doDownload">下载</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="editormd/jquery.1.11.3.min.js"></script>
+    <script src="editormd/editormd.min.js"></script>
+    <script type="text/javascript">
+        function getMsgId() {
+            var url = window.location.href;
+            //#和?的后方才是
+            var token = url.split('#')[1];
+            if (token == undefined) {
+                token = url.split('?')[1];
+            }
+            if (token == undefined) {
+                token = url;
+            }
+            var arr = token.split('&');
+            for (var i = 0; i < arr.length; i++) {
+                var item = arr[i];
+                if (item.indexOf('msgId=') == 0) {
+                    var s = item.substring(6);
+                    if (s != '') {
+                        return s;
+                    }
+                    break;
+                }
+            }
+            window.history.back(-1);
+        }
+        var msgId = getMsgId();
+        var curUrlBase = window.location.href;
+        curUrlBase = curUrlBase.split('?')[0];
+        curUrlBase = curUrlBase.split('#')[0];
+        curUrlBase = curUrlBase.substring(0, curUrlBase.lastIndexOf('/') + 1);
+        var drag_area = document.getElementById("drag_area");
+        DG_getMsgById(msgId, function (ok, ret) {
+            if (ok) {
+                console.log(ret);
+                document.getElementById("msgName").value = ret.msgName;
+                document.getElementById("msgType").options[ret.type].selected = true;
+                switch (ret.type) {
+                    case XMsgObjectType.TEXT:
+                        document.getElementById("textDiv").style.display = "block";
+                        document.getElementById("textInput").value = ret.textMsg;
+                        break;
+                    case XMsgObjectType.MARKDOWN:
+                        document.getElementById("markdownDiv").style.display = "block";
+                        document.getElementById("md-editor-txt").value = ret.textMsg;
+                        var MDeditor = editormd("md-editor", {
+                            path: "editormd/lib/",
+                            readOnly: true,
+                        });
+                        break;
+                    case XMsgObjectType.FILE:
+                        document.getElementById("fileDiv").style.display = "block";
+                        document.getElementById("fileName").value = ret.fileMsg.name;
+                        drag_area.innerHTML = "文件（字节大小：" + ret.fileMsg.size + "）：" + ret.fileMsg.name;
+                        break;
+                    case XMsgObjectType.IMAGE:
+                        document.getElementById("imageDiv").style.display = "block";
+                        DG_getbuffer(msgId, function (success, blobObj) {
+                            if (success) {
+                                //把blob转成image
+                                var reader = new FileReader();
+                                reader.onload = function (e) {
+                                    var imagePrev = document.getElementById("imagePrev");
+                                    imagePrev.src = e.target.result;
+                                    //获取图片大小
+                                    var image = new Image();
+                                    image.src = e.target.result;
+                                    image.onload = function () {
+                                        var width = image.width;
+                                        var height = image.height;
+                                        var wh = width / height;
+                                        //获取当前屏幕宽高
+                                        var screenWidth = window.screen.width;
+                                        var screenHeight = window.screen.height;
+                                        var screenWH = screenWidth / screenHeight;
+                                        if (wh > screenWH) {
+                                            imagePrev.style.width = "50vw";
+                                            imagePrev.style.height = "auto";
+                                        } else {
+                                            imagePrev.style.width = "auto";
+                                            imagePrev.style.height = "50vh";
+                                        }
+                                    }
+                                }
+                                reader.readAsDataURL(blobObj);
+                            } else {
+                                layer.msg(blobObj, {
+                                    time: 1000
+                                });
+                            }
+                        });
+                        break;
+                    case XMsgObjectType.AUDIO:
+                        document.getElementById("audioDiv").style.display = "block";
+                        var audioPrev = document.getElementById("audioPrev");
+                        audioPrev.src = "./api.cgi?api=download&msgId=" + msgId;
+                        audioPrev.style.display = "block";
+                        break;
+                    case XMsgObjectType.VIDEO:
+                        document.getElementById("videoDiv").style.display = "block";
+                        var videoPrev = document.getElementById("videoPrev");
+                        videoPrev.src = "./api.cgi?api=download&msgId=" + msgId;
+                        videoPrev.style.display = "block";
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                layer.msg(ret);
+            }
+        });
+        document.getElementById("backBTN").onclick = function () {
+            //上一个页面的地址
+            window.history.back(-1);
+        }
+
+
+        // var POST_image = null;
+        // document.getElementById("imageBtn").onclick = function () {
+        //     //发起文件选择对话框
+        //     var noneinput = document.createElement("input");
+        //     noneinput.type = "file";
+        //     noneinput.accept = "image/*";
+        //     noneinput.style.display = "none";
+        //     noneinput.onchange = function () {
+        //         var file = noneinput.files[0];
+        //         if (file != null && file != undefined) {
+        //             POST_image = file;
+        //             var reader = new FileReader();
+        //             reader.onload = function (e) {
+        //                 var imagePrev = document.getElementById("imagePrev");
+        //                 imagePrev.src = e.target.result;
+        //                 //获取图片大小
+        //                 var image = new Image();
+        //                 image.src = e.target.result;
+        //                 image.onload = function () {
+        //                     var width = image.width;
+        //                     var height = image.height;
+        //                     var wh = width / height;
+        //                     //获取当前屏幕宽高
+        //                     var screenWidth = window.screen.width;
+        //                     var screenHeight = window.screen.height;
+        //                     var screenWH = screenWidth / screenHeight;
+        //                     if (wh > screenWH) {
+        //                         imagePrev.style.width = "50vw";
+        //                         imagePrev.style.height = "auto";
+        //                     } else {
+        //                         imagePrev.style.width = "auto";
+        //                         imagePrev.style.height = "50vh";
+        //                     }
+        //                 }
+
+        //             }
+        //             reader.readAsDataURL(file);
+        //         }
+        //     }
+        //     noneinput.click();
+        // }
+        var POST_audio = null;
+        // document.getElementById("audioBtn").onclick = function () {
+        //     //发起文件选择对话框
+        //     var noneinput = document.createElement("input");
+        //     noneinput.type = "file";
+        //     noneinput.accept = "audio/*";
+        //     noneinput.style.display = "none";
+        //     noneinput.onchange = function () {
+        //         var file = noneinput.files[0];
+        //         if (file != null && file != undefined) {
+        //             POST_audio = file;
+        //             var reader = new FileReader();
+        //             reader.onload = function (e) {
+        //                 var audioPrev = document.getElementById("audioPrev");
+        //                 audioPrev.src = e.target.result;
+        //                 audioPrev.style.display = "block";
+        //             }
+        //             reader.readAsDataURL(file);
+        //         }
+        //     }
+        //     noneinput.click();
+        // }
+        var POST_video = null;
+        // document.getElementById("videoBtn").onclick = function () {
+        //     //发起文件选择对话框
+        //     var noneinput = document.createElement("input");
+        //     noneinput.type = "file";
+        //     noneinput.accept = "video/*";
+        //     noneinput.style.display = "none";
+        //     noneinput.onchange = function () {
+        //         var file = noneinput.files[0];
+        //         if (file != null && file != undefined) {
+        //             POST_video = file;
+        //             var reader = new FileReader();
+        //             reader.onload = function (e) {
+        //                 var videoPrev = document.getElementById("videoPrev");
+        //                 videoPrev.src = e.target.result;
+        //                 videoPrev.style.display = "block";
+        //             }
+        //             reader.readAsDataURL(file);
+        //         }
+        //     }
+        //     noneinput.click();
+        // }
+        var MDeditor = null;
+        document.getElementById("msgType").addEventListener("change", function () {
+            var msgType = document.getElementById("msgType").value;
+            document.getElementById("textDiv").style.display = "none";
+            document.getElementById("markdownDiv").style.display = "none";
+            document.getElementById("fileDiv").style.display = "none";
+            document.getElementById("imageDiv").style.display = "none";
+            document.getElementById("audioDiv").style.display = "none";
+            document.getElementById("videoDiv").style.display = "none";
+            if (msgType == "text") {
+                document.getElementById("textDiv").style.display = "block";
+            } else if (msgType == "markdown") {
+                document.getElementById("markdownDiv").style.display = "block";
+                $(function () {
+                    if (MDeditor == null) {
+                        MDeditor = editormd("md-editor", {
+                            // width  : "100%",
+                            // height : "100%",
+                            path: "editormd/lib/"
+                        });
+                    }
+                });
+            } else if (msgType == "file") {
+                document.getElementById("fileDiv").style.display = "block";
+            } else if (msgType == "image") {
+                document.getElementById("imageDiv").style.display = "block";
+            } else if (msgType == "audio") {
+                document.getElementById("audioDiv").style.display = "block";
+            } else if (msgType == "video") {
+                document.getElementById("videoDiv").style.display = "block";
+            }
+        });
+        //doSendBTN
+        document.getElementById("doDownload").onclick = function () {
+            layer.confirm('真的要下载吗？', function (index) {
+                layer.msg('发起下载请求中', {
+                    time: 1000
+                });
+                DG_download(msgId);
+            });
+        }
+    </script>
+</body>
+
+</html>

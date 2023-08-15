@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>递龟——文件中转站局域网扫码</title>
+    <link rel="stylesheet" href="./layui/css/layui.css">
+    <script type="text/javascript" src="./layui/layui.js"></script>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+</head>
+
+<body>
+    <div id="particles-js"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;background-color: #0093E9;background-image: linear-gradient(160deg, #0093E9 0%, #80D0C7 100%);">
+        <!-- <canvas id="canvas"></canvas> -->
+    </div>
+    <script src="./BG/particles.min.js"></script>
+    <script src="./BG/BGdraw.js"></script>
+    <!-- 中间一个大二维码，显示Port信息，下方一堆小二维码分别显示对应IP网址 -->
+    <div class="layui-container">
+        <div style="margin-top: 5%;">
+            <!-- <div style="text-align: center;">
+                <img id="mainShow" src="" style="width: 25%;height: 25%;display: block;margin: 0 auto;">
+                <span style="color: white;display: block;margin: 0 auto;font-size: xx-large;">请在同局域网中使用递龟APP扫码</span>
+            </div> -->
+            <div id="subShow"
+                style="display: flex;justify-content: space-around;margin-top: 5%;overflow: auto;flex-wrap: wrap;">
+            </div>
+        </div>
+    </div>
+    <script src="qr.js"></script>
+    <script>
+        //解析传在URL中的参数
+        function getQueryString(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+            var r = window.location.search.substr(1).match(reg); //获取url中"?"符后的字符串并正则匹配
+            var context = "";
+            if (r != null)
+                context = r[2];
+            reg = null;
+            r = null;
+            if (context == null || context == "" || context == "undefined") {
+                return null;
+            } else {
+                //匹配布尔和数字
+                if (context == 'true') {
+                    return true;
+                } else if (context == 'false') {
+                    return false;
+                } else if (!isNaN(context)) {
+                    return Number(context);
+                } else {
+                    return context;
+                }
+            }
+        }
+        var shareIndexPage = getQueryString('shareIndexPage');
+        if (shareIndexPage) {
+            //获取getPort.json
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', 'getPort.json', true);
+            xhr.send();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    // document.getElementById('mainShow').src = QRCode.generatePNG(xhr.responseText, {
+                    //     modulesize: 15,
+                    //     margin: 3,
+                    //     version: -1,
+                    //     ecclevel: 'L'
+                    // });
+                    let json = JSON.parse(xhr.responseText);
+                    for (let i = 0; i < json.length; i++) {
+                        let ip = Object.keys(json[i])[0];
+                        let port = json[i][ip];
+                        var box = document.createElement('div');
+                        box.style.textAlign = 'center';
+                        var img = document.createElement('img');
+                        img.src = QRCode.generatePNG('http://' + ip + ':' + port, {
+                            modulesize: 5,
+                            margin: 3,
+                            version: -1,
+                            ecclevel: 'H'
+                        });
+                        img.style.width = '10em';
+                        img.style.height = '10em';
+                        box.appendChild(img);
+                        var text = document.createElement('p');
+                        text.style.color = 'white';
+                        text.appendChild(document.createTextNode(ip + ':' + port));
+                        box.appendChild(text);
+                        var extaTxt = null;
+                        //划分IP段
+                        let ipArr = ip.split('.');
+                        if (ipArr[0] == '192' && ipArr[1] == '168') {
+                            extaTxt = '（局域网）';
+                        } else if (ipArr[0] == '10') {
+                            extaTxt = '（局域网）';
+                        } else if (ipArr[0] == '172' && ipArr[1] >= '16' && ipArr[1] <= '31') {
+                            extaTxt = '（局域网）';
+                        } else if (ipArr[0] == '127') {
+                            extaTxt = '（本机回环）';
+                        } else {
+                            extaTxt = '（公网）';
+                        }
+                        var text2 = document.createElement('p');
+                        text2.style.color = 'white';
+                        text2.appendChild(document.createTextNode(extaTxt));
+                        box.appendChild(text2);
+                        box.onclick = function () {
+                            window.open('http://' + ip + ':' + port);
+                        }
+                        document.getElementById('subShow').appendChild(box);
+                    }
+                }
+            }
+        }
+        //底部通知条显示123
+        layui.use('layer', function () {
+            var layer = layui.layer;
+            layer.msg('Tips: 局域网可选择对应网址打开', {
+                time: 10000,
+                offset: 'b',
+                area: 'auto',
+                shade: 0,
+                shadeClose: true,
+            });
+        });
+    </script>
+
+</body>
+
+</html>

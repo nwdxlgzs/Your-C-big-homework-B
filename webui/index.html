@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>递龟——文件中转站登录</title>
+    <link rel="stylesheet" href="./layui/css/layui.css">
+    <script type="text/javascript" src="./layui/layui.js"></script>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />、
+    <script src="./core.js"></script>
+</head>
+
+<body>
+    <div id="particles-js"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;background-color: #0093E9;background-image: linear-gradient(160deg, #0093E9 0%, #80D0C7 100%);">
+        <!-- <canvas id="canvas"></canvas> -->
+    </div>
+    <script src="./BG/particles.min.js"></script>
+    <script src="./BG/BGdraw.js"></script>
+    <div style="position: fixed; top: 30px; right: 20px; z-index: 9999;">
+        <button class="layui-btn layui-btn-normal" id="showQR">局域网扫码</button>
+    </div>
+    <div class="layui-container">
+        <div class="layui-card layui-col-md6 layui-col-md-offset3" style="margin-top: 20vh;">
+            <div class="layui-card-header layui-card-header-text"
+                style="text-align: center;margin-top: 10px; margin-bottom: 10px;height: 70px;">
+                <img src="./favicon.ico" style="width: 50px; height: 50px;">
+                <span style="font-size: 30px;">递龟——文件中转站</span>
+                <p style="font-size: 10px;margin-top:-20px;" id="ipInfo">当前提供服务的主机程序：未知</p>
+            </div>
+            <div class="layui-card-body">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">账号：</label>
+                    <div class="layui-input-block">
+                        <input type="text" id="username" name="username" placeholder="请输入账号" autocomplete="off"
+                            class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">密码：</label>
+                    <div class="layui-input-block">
+                        <input type="password" id="password" name="password" placeholder="请输入密码" autocomplete="off"
+                            class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item" style="display: none;" id="password2Div">
+                    <label class="layui-form-label">确认密码：</label>
+                    <div class="layui-input-block">
+                        <input type="password" id="password2" name="password2" placeholder="请再次输入密码" autocomplete="off"
+                            class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <div id="loginDiv">
+                            <button class="layui-btn" id="doLoginBTN">登录</button>
+                            <button class="layui-btn layui-btn-normal" id="gotoRegisterBTN">注册</button>
+                        </div>
+                        <div id="registerDiv" style="display: none;">
+                            <button class="layui-btn" id="doRegisterBTN">注册</button>
+                            <button class="layui-btn layui-btn-primary" id="gotoLoginBTN">返回登录页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-card-footer layui-col-md6 layui-col-md-offset3"
+                style="text-align: center; margin-top: 5%;margin-bottom: 5%; font-size: 10px;">
+                C语言大作业 · 学号： <span id="stuID">未知</span>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    {
+        var domain = document.domain;
+        var port = window.location.port;
+        if (port == "") {
+            port = "80";
+        }
+        if (domain == "") {
+            domain = "localhost";
+        }
+        //判断是不是file协议
+        if (window.location.protocol == "file:") {
+            var browserName = "Other";
+            var ua = window.navigator.userAgent;
+            browserRegExp = {
+                Sogou: /SE\s2\.X|SogouMobileBrowser/,
+                Explorer2345: /2345Explorer|2345chrome|Mb2345Browser/,
+                Liebao: /LBBROWSER/,
+                QQBrowser: /QQBrowser/,
+                Baidu: /BIDUBrowser|baidubrowser|BaiduHD/,
+                UC: /UBrowser|UCBrowser|UCWEB/,
+                MiuiBrowser: /MiuiBrowser/,
+                Wechat: /MicroMessenger/,
+                MobileQQ: /Mobile\/\w{5,}\sQQ\/(\d+[\.\d]+)/,
+                Shoujibaidu: /baiduboxapp/,
+                Firefox: /Firefox/,
+                Maxthon: /Maxthon/,
+                Se360: /360SE/,
+                Ee360: /360EE/,
+                TheWorld: /TheWorld/,
+                Weibo: /__weibo__/,
+                NokiaBrowser: /NokiaBrowser/,
+                Opera: /Opera|OPR\/(\d+[\.\d]+)/,
+                Edge: /Edge?/,
+                AndroidBrowser: /Android.*Mobile\sSafari|Android\/(\d[\.\d]+)\sRelease\/(\d[\.\d]+)\sBrowser\/AppleWebKit(\d[\.\d]+)/i,
+                IE: /Trident|MSIE/,
+                Chrome: /Chrome|CriOS/,
+                Safari: /Version[|\/]([\w.]+)(\s\w.+)?\s?Safari|like\sGecko\)\sMobile\/\w{3,}$/,
+            };
+            for (var i in browserRegExp) {
+                if (browserRegExp[i].exec(ua)) {
+                    browserName = i;
+                    break;
+                }
+            }
+            document.getElementById("ipInfo").innerHTML = "当前主机程序：" + browserName;
+        } else {
+            document.getElementById("ipInfo").innerHTML = "当前主机程序：" + domain + ":" + port;
+        }
+    }
+    DG_getStudentID(function (ok, stuID) {
+        if (ok)
+            document.getElementById("stuID").innerHTML = stuID;
+        else
+            document.getElementById("stuID").innerHTML = "未知???";
+    });
+    document.getElementById("showQR").onclick = function () {
+        //打开网页（./showQR.html）并传递参数(直接没有窗口控制按钮)
+        layer.open({
+            type: 2,
+            title: false, // 隐藏标题栏
+            closeBtn: false, // 隐藏关闭按钮
+            // title: '局域网扫码(中间是程序自动登录的二维码，下头是每个局域网地址链接)',
+            shadeClose: true,
+            shade: 0.1,
+            area: ['70%', '80%'],
+            content: './showQR.html?shareIndexPage=true'
+        });
+    }
+    document.getElementById("doLoginBTN").onclick = function () {
+        var acc = document.getElementById("username").value;
+        var pwd = document.getElementById("password").value;
+        DG_login(acc, pwd, function (ok, msg, ownerID) {
+            if (ok) {
+                layer.msg("登录成功");
+                localStorage.setItem("#DG_db#token2ownerID#" +msg, ownerID);
+                window.location.href = "./main.html?token=" + msg;
+            } else {
+                layer.msg("登录失败：" + msg);
+            }
+        });
+    };
+    document.getElementById("gotoRegisterBTN").onclick = function () {
+        document.getElementById("loginDiv").style.display = "none";
+        document.getElementById("registerDiv").style.display = "block";
+        document.getElementById("password2Div").style.display = "block";
+        document.getElementById("password2").value = "";
+    };
+    document.getElementById("gotoLoginBTN").onclick = function () {
+        document.getElementById("loginDiv").style.display = "block";
+        document.getElementById("registerDiv").style.display = "none";
+        document.getElementById("password2Div").style.display = "none";
+    };
+    document.getElementById("doRegisterBTN").onclick = function () {
+        var acc = document.getElementById("username").value;
+        var pwd = document.getElementById("password").value;
+        var pwd2 = document.getElementById("password2").value;
+        if (pwd != pwd2) {
+            layer.msg("两次密码不一致");
+            return;
+        }
+        DG_register(acc, pwd, function (ok, msg) {
+            if (ok) {
+                layer.msg("注册成功");
+                document.getElementById("gotoLoginBTN").click();
+                document.getElementById("password").value = "";
+            } else {
+                layer.msg("注册失败：" + msg);
+            }
+        });
+    };
+    // // ./api.cgi?api=AreYouAlive
+    // {
+    //     var xhr = new XMLHttpRequest();
+    //     xhr.open('GET', './api.cgi?api=AreYouAlive', true);
+    //     xhr.send();
+    //     xhr.onreadystatechange = function () {
+    //         if (xhr.readyState == 4 && xhr.status == 200) {
+    //             console.log(xhr.responseText);
+    //         }
+    //     }
+    // }
+</script>
+
+</html>
